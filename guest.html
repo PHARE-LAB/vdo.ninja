@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Join – Airroom</title>
+<style>
+body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.4;background:#fff;margin:0}
+.wrap{max-width:560px;margin:40px auto;padding:24px}
+h1{font-size:20px;margin:0 0 8px}
+.card{border:1px solid #e5e7eb;border-radius:16px;padding:16px 16px 20px;margin:16px 0}
+label{display:block;font-size:12px;color:#6b7280;margin-bottom:6px}
+input,select{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px}
+button{appearance:none;border:0;background:#111;color:#fff;padding:12px 14px;border-radius:12px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:12px}
+.hint{font-size:12px;color:#6b7280}
+.danger{color:#b91c1c;font-size:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;border:1px solid #e5e7eb;border-radius:999px;padding:4px 8px;font-size:12px;color:#374151}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Join an interview</h1>
+<div class="card">
+<div class="pill" title="Broadcast‑quality audio">🎙️ Audio first</div>
+<div style="height:8px"></div>
+<label for="code">Session code</label>
+<input id="code" placeholder="e.g. 7421" minlength="4" maxlength="8"/>
+<div style="height:12px"></div>
+<label for="name">Your name</label>
+<input id="name" placeholder="e.g. Anna" />
+<div style="height:12px"></div>
+<label for="mic">Microphone (recommended)</label>
+<select id="mic">
+<option>External mic / USB interface</option>
+<option>Built‑in mic (not recommended)</option>
+</select>
+<div class="hint">Use headphones. We’ll block speakers if detected.</div>
+<div style="height:16px"></div>
+<button id="joinBtn" disabled>Join</button>
+<div style="height:8px"></div>
+<div class="hint">By joining you agree to be recorded if the host enables recording.</div>
+<div id="err" class="danger" style="margin-top:8px;display:none"></div>
+</div>
+</div>
+
+
+<script>
+// Minimal guards (no device API here for simplicity)
+const el = (id)=>document.getElementById(id);
+const state = { ok:false };
+const validate = ()=>{
+const c = el('code').value.trim();
+const n = el('name').value.trim();
+state.ok = c.length>=4 && n.length>=2;
+el('joinBtn').disabled = !state.ok;
+};
+['code','name'].forEach(id=>el(id).addEventListener('input', validate));
+
+
+// Cleanfeed‑style VDO.Ninja params (audio‑first)
+function makeGuestUrl(code, name){
+const base = 'https://vdo.ninja/';
+const params = new URLSearchParams({
+push: code, // guest publishes to code
+label: name, // shows name to host
+});
+// Audio quality flags
+params.append('proaudio',''); // disable AEC/AGC/NS, unlock hi‑fi
+params.append('monomic','1'); // radio mono
+params.append('outboundaudiobitrate','192'); // kbps
+params.append('audiocontenthint','music'); // steady full‑band
+params.append('novideo',''); // keep link audio‑only
+// If you want low video for eye contact, remove novideo and add: quality=0
+// params.append('quality','0');
+return base + '?' + params.toString();
+}
+
+
+el('joinBtn').addEventListener('click', ()=>{
+const code = el('code').value.trim();
+const name = el('name').value.trim();
+if(!state.ok) return;
+// Optional: require external mic selection
+if(el('mic').selectedIndex===1){
+el('err').style.display='block';
+el('err').textContent='Please pick an external microphone for best quality.';
+return;
+}
+const url = makeGuestUrl(code, name);
+// Open in same tab
+location.href = url;
+});
+</script>
+</body>
+</html>
